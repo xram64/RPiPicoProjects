@@ -7,12 +7,14 @@ Run commands from within the project folder.
 
 ## Pico W - Standard build:
 ```sh
-cmake -DPICO_BOARD=pico_w -DPICO_SDK_PATH=~/git/pico-sdk/ .
+mkdir build && cd build
+cmake -DPICO_BOARD=pico_w -DPICO_SDK_PATH=~/pico_projects/pico-sdk/ ..
 ```
 
 ## Pico W - With WiFi connection:
 ```sh
-cmake -DPICO_BOARD=pico_w -DPICO_SDK_PATH=~/git/pico-sdk/ -DWIFI_SSID="_SSID_" -DWIFI_PASSWORD="_PASSWORD_" .
+mkdir build && cd build
+cmake -DPICO_BOARD=pico_w -DPICO_SDK_PATH=~/pico_projects/pico-sdk/ -DWIFI_SSID="_SSID_" -DWIFI_PASSWORD="_PASSWORD_" ..
 ```
 
 ## After building, run make:

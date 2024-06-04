@@ -23,12 +23,18 @@ add_executable(
     motion_notifier_range_sensor.c
 )
 
+# pico_enable_stdio_usb(motion_notifier_range_sensor 1)
+# pico_enable_stdio_uart(motion_notifier_range_sensor 1)
+
 # Add libraries
 target_link_libraries(
     motion_notifier_range_sensor
     pico_cyw43_arch_lwip_threadsafe_background
     pico_stdlib
 )
+
+target_include_directories(motion_notifier_range_sensor)
+# target_include_directories(motion_notifier_range_sensor PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/..)
 
 # Create map/bin/hex/uf2 file in addition to ELF.
 pico_add_extra_outputs(motion_notifier_range_sensor)
