@@ -11,7 +11,9 @@ set(PICO_BOARD pico_w)
 # Note: this must happen before project()
 include(pico_sdk_import.cmake)
 
-project(motion_notifier_range_sensor)
+project(motion_notifier_range_sensor) # C CXX ASM)
+# set(CMAKE_C_STANDARD 11)
+# set(CMAKE_CXX_STANDARD 17)
 
 # Initialize the Raspberry Pi Pico SDK
 pico_sdk_init()
@@ -22,19 +24,23 @@ add_executable(
     motion_notifier_range_sensor
     motion_notifier_range_sensor.c
 )
-
-# pico_enable_stdio_usb(motion_notifier_range_sensor 1)
-# pico_enable_stdio_uart(motion_notifier_range_sensor 1)
+target_compile_definitions(
+    motion_notifier_range_sensor
+    PRIVATE WIFI_SSID=\"${WIFI_SSID}\" WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+)
 
 # Add libraries
 target_link_libraries(
     motion_notifier_range_sensor
-    pico_cyw43_arch_lwip_threadsafe_background
     pico_stdlib
+    pico_cyw43_arch_lwip_threadsafe_background
 )
 
-target_include_directories(motion_notifier_range_sensor)
-# target_include_directories(motion_notifier_range_sensor PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/..)
+# Includes (using `${CMAKE_CURRENT_LIST_DIR}/..` to find copy of `lwipopts.h` file in top-level folder)
+target_include_directories(
+    motion_notifier_range_sensor
+    PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_LIST_DIR}/.. ${CMAKE_CURRENT_LIST_DIR}/../.includes
+)
 
 # Create map/bin/hex/uf2 file in addition to ELF.
 pico_add_extra_outputs(motion_notifier_range_sensor)

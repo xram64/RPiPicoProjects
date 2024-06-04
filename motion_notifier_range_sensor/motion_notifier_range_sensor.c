@@ -15,9 +15,6 @@
 #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 
-// char ssid[] = "A Network";
-// char pass[] = "A Password";
-
 const uint SUCCESS_LED_PIN = 0;  // GP0 (Pin 1)
 const uint FAILURE_LED_PIN = 1;  // GP1 (Pin 2)
 
@@ -35,7 +32,6 @@ void flash_led(uint pin, uint speed) {
         gpio_put(pin, 0);
         sleep_ms(speed);
     }
-    return
 }
 
 int main() {
