@@ -1,5 +1,5 @@
 .dev
-.includes
+.vscode/c_cpp_properties.json.2
 
 pico-sdk/
 build/
