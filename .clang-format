@@ -1,0 +1,15 @@
+---
+BasedOnStyle: LLVM
+
+AllowShortIfStatementsOnASingleLine: true
+BreakBeforeBraces: Attach
+SpacesBeforeTrailingComments: 2
+
+ColumnLimit: 160
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+IncludeBlocks: Regroup
+SortIncludes: Never
+...

@@ -2,4 +2,4 @@
 .vscode/c_cpp_properties.json
 
 pico-sdk/
-build/
+build*/

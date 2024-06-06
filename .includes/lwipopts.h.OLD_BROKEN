@@ -39,7 +39,7 @@
 #define LWIP_IPV4                  1
 #define LWIP_IPV6                  1
 
-#define NO_SYS                     0
+#define NO_SYS                     1
 #define LWIP_SOCKET                (NO_SYS==0)
 #define LWIP_NETCONN               (NO_SYS==0)
 #define LWIP_NETIF_API             (NO_SYS==0)
@@ -168,8 +168,8 @@ a lot of data that needs to be copied, this should be set high. */
  * for certain critical regions during buffer allocation, deallocation and memory
  * allocation and deallocation.
  */
-#define SYS_LIGHTWEIGHT_PROT    (NO_SYS==0)
-// #define SYS_LIGHTWEIGHT_PROT    0
+// #define SYS_LIGHTWEIGHT_PROT    (NO_SYS==0)
+#define SYS_LIGHTWEIGHT_PROT    1
 
 
 /* ---------- TCP options ---------- */
@@ -330,7 +330,10 @@ void lwip_example_app_platform_assert(const char *msg, int line, const char *fil
 
 /* ---------- Custom options ---------- */
 // Override `timeval` definition in `lib/lwip/src/include/lwip/sockets.h`.
-// #define LWIP_TIMEVAL_PRIVATE 0
+#define LWIP_TIMEVAL_PRIVATE 0
+
+// Force LWIP error number definitions in `/home/pi/Pico/pico-sdk/lib/lwip/src/include/lwip/errno.h`.
+#define LWIP_PROVIDE_ERRNO 1
 
 /* [PROBABLY NOT NEEDED?]
 // Defines to fix errors with `static const int err_to_errno_table[]` definitions (line 48) in `lib/lwip/src/api/err.c`.

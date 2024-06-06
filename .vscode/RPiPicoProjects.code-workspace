@@ -2,11 +2,13 @@
 	"folders": [
 		{
 			"path": ".."
-		},
-		{
-			"path": "../../pico-sdk"
 		}
 	],
 	"settings": {
+		"files.associations": {
+			"*.cmake": "makefile",
+			"errno.h": "c",
+			"cyw43_arch.h": "c"
+		}
 	}
 }
