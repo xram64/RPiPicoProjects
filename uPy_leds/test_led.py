@@ -5,7 +5,7 @@ ledY = Pin("GP1", Pin.OUT)
 ledR = Pin("GP2", Pin.OUT)
 
 for led in [ledG, ledY, ledR]:
-        led.off()
+    led.off()
 
 timer1 = Timer()
 # timer2 = Timer()
