@@ -3,3 +3,4 @@
 
 pico-sdk/
 build*/
+secrets.*
