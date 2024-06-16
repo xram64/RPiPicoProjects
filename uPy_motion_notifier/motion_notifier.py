@@ -26,13 +26,15 @@ with open('secrets.json') as f:
 # Set WLAN region
 rp2_country('US')
 
-
 # OpenPIR sensor
 sensor_PIR_OUT = Pin("GP22", Pin.IN)    # Pin 29 - `OUT` Digital PIR output
 sensor_PIR_A   = ADC(26)                # Pin 31 (ADC0) - `A` Raw analog PIR output
 
 # Hall-effect sensor
-sensor_hall_OUT = Pin("GP15", Pin.IN)   # Pin 20
+sensor_hall_OUT = Pin("GP15", Pin.IN, Pin.PULL_UP)   # Pin 20
+
+# Kill switch (global trigger toggle)
+input_kill_switch = Pin("GP10", Pin.IN, Pin.PULL_UP)  # Pin 14
 
 
 def connect_to_wifi(wlan: network.WLAN) -> None|tuple[str,str,str,str]:
@@ -132,7 +134,10 @@ if __name__ == '__main__':
         
         # If door is closed (hall-effect sensor) and motion is detected (PIR sensor), set the notification trigger
         if door_is_closed() and motion_is_detected():
-            trigger_notification = True
+            if input_kill_switch.value() == 1:
+                print('Attempted to trigger notification, but kill switch is active.')
+            else:
+                trigger_notification = True
         
         # Try sending notification if trigger is active
         try:
