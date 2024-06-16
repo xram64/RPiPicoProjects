@@ -8,13 +8,14 @@ import json
 import network
 import requests
 from rp2 import country as rp2_country
-from time import sleep, sleep_ms, sleep_us, ticks_us, ticks_diff
+from time import time, sleep, sleep_ms, sleep_us, ticks_us, ticks_diff
 from machine import Pin, ADC
 import debug
 
 # Constants
 DEBUG = True  # Global debug flag
 MAX_WAIT_TIME: int = 30  # Max wait time for WiFi connection, in seconds
+TRIGGER_COOLDOWN: int = 10  # Minimum time to wait between notification triggers
 
 # [DEBUG] Initialize debug LEDs 
 leds = debug.LEDs(enabled=DEBUG)
@@ -121,11 +122,15 @@ if __name__ == '__main__':
             # Connection failed
             sleep(15)  # Wait and retry
     
-    # Maintain WiFi connection while polling sensors and waiting for a notification trigger
+    last_trigger = time()  # to record time of last trigger for a cooldown timer
     poll_rate = 250  # sensor poll rate in ms
+    
+    # Initializing the trigger here instead of in the loop, so that if an exception is thrown while
+    #  trying to send a notification, the trigger will stay active for the next pass so we can try again.
+    trigger_notification = False
+    
+    # Maintain WiFi connection while polling sensors and waiting for a notification trigger
     while True:
-        trigger_notification = False
-        
         # When DEBUG is enabled, use LEDs to show when each sensor is triggered
         # (The debug LED timers should match the sensor poll rate)
         if DEBUG:
@@ -142,8 +147,15 @@ if __name__ == '__main__':
         # Try sending notification if trigger is active
         try:
             if trigger_notification:
-                trigger_notification = False
-                send_gotify_notification()
+                # Check cooldown timer to see if we've sent a notification too recently
+                if time() < last_trigger + TRIGGER_COOLDOWN:
+                    print(f'Attempted to trigger notification, but cooldown is active ({TRIGGER_COOLDOWN}s).')
+                    trigger_notification = False
+                else:
+                    # If we make it here, send the notification
+                    send_gotify_notification()
+                    last_trigger = time()
+                    trigger_notification = False
         except:
             print('WiFi connection dropped. Attempting to reconnect...')
             
