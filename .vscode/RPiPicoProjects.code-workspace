@@ -10,6 +10,6 @@
 			"errno.h": "c",
 			"cyw43_arch.h": "c"
 		},
-		"micropico.syncFolder": "motion_notifier-upy"
+		"micropico.syncFolder": "uPy_motion_notifier"
 	}
 }

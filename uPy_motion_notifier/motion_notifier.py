@@ -18,7 +18,6 @@ MAX_WAIT_TIME: int = 30  # Max wait time for WiFi connection, in seconds
 
 # [DEBUG] Initialize debug LEDs 
 leds = debug.LEDs(enabled=DEBUG)
-leds.enabled = True
 
 # Read secrets
 with open('secrets.json') as f:
@@ -44,7 +43,7 @@ def connect_to_wifi(wlan: network.WLAN) -> None|tuple[str,str,str,str]:
     # Connect using WiFi login
     wlan.connect(SECRETS['WIFI']['SSID'], SECRETS['WIFI']['PSK'])
     
-    leds.set_blink_timer(leds.ledY, 8)  # [DEBUG]
+    leds.set_blink_timer(leds.ledY, 6)  # [DEBUG]
     
     # Wait for connect or fail
     print('Waiting for connection...')
@@ -54,8 +53,7 @@ def connect_to_wifi(wlan: network.WLAN) -> None|tuple[str,str,str,str]:
             break
         sleep(1)
     
-    # leds.kill_timer(leds.ledY)  # [DEBUG]
-    leds.timers[leds.ledY].deinit() # type: ignore
+    leds.kill_timer(leds.ledY)  # [DEBUG]
     
     # Handle connection errors
     if wlan.status() != 3:  # Not connected
@@ -95,13 +93,11 @@ def _poll_sensor_hall_OUT() -> bool:
 def motion_is_detected() -> bool:
     # When the PIR sensor reads logic 1 ('high'), motion is detected,
     #  so we can pass through the boolean sensor value.
-    if DEBUG: leds.set_oneshot_timer(leds.ledR)
     return _poll_sensor_PIR_OUT()
 
 def door_is_closed() -> bool:
     # When the hall-effect sensor reads logic 0 ('low'), the door is closed (sensor is near magnet),
     #  so we pass the inverse of the boolean sensor value.
-    if DEBUG: leds.set_oneshot_timer(leds.ledY)
     return not _poll_sensor_hall_OUT()
 
 
@@ -121,11 +117,18 @@ if __name__ == '__main__':
             break
         else:
             # Connection failed
-            sleep(30)  # Wait 30 seconds and retry
+            sleep(15)  # Wait and retry
     
-    # Maintain WiFi connection while waiting to transmit a notification
+    # Maintain WiFi connection while polling sensors and waiting for a notification trigger
+    poll_rate = 250  # sensor poll rate in ms
     while True:
         trigger_notification = False
+        
+        # When DEBUG is enabled, use LEDs to show when each sensor is triggered
+        # (The debug LED timers should match the sensor poll rate)
+        if DEBUG:
+            if door_is_closed(): leds.set_oneshot_timer(leds.ledY, poll_rate)
+            if motion_is_detected(): leds.set_oneshot_timer(leds.ledR, poll_rate)
         
         # If door is closed (hall-effect sensor) and motion is detected (PIR sensor), set the notification trigger
         if door_is_closed() and motion_is_detected():
@@ -148,7 +151,6 @@ if __name__ == '__main__':
                 else:
                     pass
     
-        # Global sleep between sensor checks
-        sleep(5)
-        # break
+        # Sleep between sensor checks
+        sleep_ms(poll_rate)
     

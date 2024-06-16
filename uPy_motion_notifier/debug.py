@@ -88,6 +88,7 @@ class LEDs():
         # Clear the timer on this pin if any already exists
         if self.timers[led]:
             self.timers[led].deinit()  # type: ignore
+            self.timers[led] = None
         
         led_timer = Timer()
         led_timer.init(mode=Timer.PERIODIC, freq=freq_hz, callback=lambda tm: led.toggle())
@@ -98,20 +99,15 @@ class LEDs():
     def set_oneshot_timer(self, led:Pin, duration_ms:int = 1000):
         if not self.enabled: return  # Skip if debug is disabled
         
-        def _timer(tm):
-            led.off()
-            # self.kill_timer(led)
-        
         # Clear the timer on this pin if any already exists
         if self.timers[led]:
             self.timers[led].deinit()  # type: ignore
+            self.timers[led] = None
         
         # Switch LED on to start, then set one-shot timer to switch LED off after a delay
         led.on()
         led_timer = Timer()
-        led_timer.init(mode=Timer.ONE_SHOT, period=duration_ms, callback=_timer)
-        
-        self.timers[led] = None
+        led_timer.init(mode=Timer.ONE_SHOT, period=duration_ms, callback=lambda tm: led.off())
     
     # Kill an existing LED timer
     def kill_timer(self, led:Pin):
@@ -121,7 +117,7 @@ class LEDs():
             self.timers[led].deinit()  # type: ignore
             led.off()
         else:
-            print('Error: No timer currently exists on this pin.')
+            print(f'Error: No timer currently exists on the `{led}` pin.')
     
     # Cycle all LEDs
     def run_test_cycle(self):
@@ -148,6 +144,5 @@ class LEDs():
 if __name__ == '__main__':
     # leds = LEDs()
     # leds.run_test_cycle()
-    
     
     print_analog_sensor_output(ADC(26), digital_pin=Pin("GP22"))
