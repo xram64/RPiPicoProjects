@@ -29,13 +29,13 @@ rp2_country('US')
 
 # OpenPIR sensor
 sensor_PIR_OUT = Pin("GP22", Pin.IN)    # Pin 29 - `OUT` Digital PIR output
-sensor_PIR_A   = ADC(26)                # Pin 31 (ADC0) - `A` Raw analog PIR output
+sensor_PIR_A   = ADC(27)                # Pin 32 (ADC1) - `A` Raw analog PIR output
 
 # Hall-effect sensor
-sensor_hall_OUT = Pin("GP15", Pin.IN, Pin.PULL_UP)   # Pin 20
+sensor_hall_OUT = Pin("GP21", Pin.IN, Pin.PULL_UP)      # Pin 27
 
 # Kill switch (global trigger toggle)
-input_kill_switch = Pin("GP10", Pin.IN, Pin.PULL_UP)  # Pin 14
+input_kill_switch = Pin("GP18", Pin.IN, Pin.PULL_UP)    # Pin 24
 
 
 def connect_to_wifi(wlan: network.WLAN) -> None|tuple[str,str,str,str]:
