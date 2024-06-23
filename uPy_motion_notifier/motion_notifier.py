@@ -1,5 +1,5 @@
 # Motion Notifier
-# xram | v0.2 (6/12/24)
+# xram | v1.0 (6/22/24)
 
 # Notes
 #  - The ADC pins on the Pico W have 12-bit resolution (0-4095), mapped to a 16-bit int (0-65535).
@@ -8,16 +8,16 @@ import json
 import network
 import requests
 from rp2 import country as rp2_country
-from time import time, sleep, sleep_ms, sleep_us, ticks_us, ticks_diff
+from time import time, sleep, sleep_ms
 from machine import Pin, ADC
 import debug
 
 # Constants
-DEBUG = True  # Global debug flag
+DEBUG = False  # Global debug flag
 MAX_WAIT_TIME: int = 30  # Max wait time for WiFi connection, in seconds
 TRIGGER_COOLDOWN: int = 10  # Minimum time to wait between notification triggers
 
-# [DEBUG] Initialize debug LEDs 
+# [DEBUG] Initialize debug LEDs
 leds = debug.LEDs(enabled=DEBUG)
 
 # Read secrets
@@ -72,13 +72,14 @@ def connect_to_wifi(wlan: network.WLAN) -> None|tuple[str,str,str,str]:
 
 def send_gotify_notification():
     # Build notification request data
+    gotify_url = SECRETS['GOTIFY']['URL']
     gotify_token = SECRETS['GOTIFY']['TOKEN']
     gotify_data = {'title': 'Test', 'message': 'Test message...', 'priority': '10'}
     gotify_data_urlencoded = f'title={gotify_data["title"]}&priority={gotify_data["priority"]}&message={gotify_data["message"]}'
     
     # Send notification
     response = requests.post(
-        f'http://192.168.1.81:8070/message?token={gotify_token}',
+        f'{gotify_url}/message?token={gotify_token}',
         headers={'content-type': 'application/x-www-form-urlencoded'},
         data=gotify_data_urlencoded
     )
@@ -170,4 +171,3 @@ if __name__ == '__main__':
     
         # Sleep between sensor checks
         sleep_ms(poll_rate)
-    
