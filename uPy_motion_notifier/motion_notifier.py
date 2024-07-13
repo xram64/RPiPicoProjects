@@ -1,8 +1,9 @@
 # Motion Notifier
-# xram | v1.0 (6/22/24)
+# xram | v1.1 (7/6/24)
 
 # Notes
 #  - The ADC pins on the Pico W have 12-bit resolution (0-4095), mapped to a 16-bit int (0-65535).
+
 
 import json
 import network
@@ -13,12 +14,13 @@ from machine import Pin, ADC
 import debug
 
 # Constants
-DEBUG = False  # Global debug flag
+DEBUG = True  # Global debug flag
 MAX_WAIT_TIME: int = 30  # Max wait time for WiFi connection, in seconds
-TRIGGER_COOLDOWN: int = 10  # Minimum time to wait between notification triggers
+TRIGGER_COOLDOWN: int = 60  # Minimum time to wait between notification triggers, in seconds
 
 # [DEBUG] Initialize debug LEDs
-leds = debug.LEDs(enabled=DEBUG)
+# leds = debug.LEDs(enabled=DEBUG)
+leds = debug.LEDs(enabled=False)
 
 # Read secrets
 with open('secrets.json') as f:
@@ -70,21 +72,31 @@ def connect_to_wifi(wlan: network.WLAN) -> None|tuple[str,str,str,str]:
         return status
 
 
-def send_gotify_notification():
-    # Build notification request data
-    gotify_url = SECRETS['GOTIFY']['URL']
-    gotify_token = SECRETS['GOTIFY']['TOKEN']
-    gotify_data = {'title': 'Test', 'message': 'Test message...', 'priority': '10'}
-    gotify_data_urlencoded = f'title={gotify_data["title"]}&priority={gotify_data["priority"]}&message={gotify_data["message"]}'
+def send_gotify_notification(delay:int=10) -> bool:
+    # Add a delay so that when motion is detected while the door is closed, we wait to make sure door remains closed.
+    # If the door stays closed for more than (10) seconds after motion is detected, send the notification.
+    sleep(delay)
     
-    # Send notification
-    response = requests.post(
-        f'{gotify_url}/message?token={gotify_token}',
-        headers={'content-type': 'application/x-www-form-urlencoded'},
-        data=gotify_data_urlencoded
-    )
-    print(response.content)
-    response.close()
+    if door_is_closed():
+        # Build notification request data
+        gotify_url = SECRETS['GOTIFY']['URL']
+        gotify_token = SECRETS['GOTIFY']['TOKEN']
+        gotify_data = {'title': 'Test', 'message': 'Test message...', 'priority': '10'}
+        gotify_data_urlencoded = f'title={gotify_data["title"]}&priority={gotify_data["priority"]}&message={gotify_data["message"]}'
+        
+        # Send notification
+        response = requests.post(
+            f'{gotify_url}/message?token={gotify_token}',
+            headers={'content-type': 'application/x-www-form-urlencoded'},
+            data=gotify_data_urlencoded
+        )
+        print(response.content)
+        response.close()
+        
+        return True
+    
+    else:
+        return False
 
 
 def _poll_sensor_PIR_A() -> int:
@@ -104,8 +116,8 @@ def door_is_closed() -> bool:
     #  so we pass the inverse of the boolean sensor value.
     return not _poll_sensor_hall_OUT()
 
-
-if __name__ == '__main__':
+# Main entry function
+def run():
     # Create a WLAN in STA mode and put interface up
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -126,37 +138,39 @@ if __name__ == '__main__':
     last_trigger = time()  # to record time of last trigger for a cooldown timer
     poll_rate = 250  # sensor poll rate in ms
     
-    # Initializing the trigger here instead of in the loop, so that if an exception is thrown while
-    #  trying to send a notification, the trigger will stay active for the next pass so we can try again.
-    trigger_notification = False
+    # Initializing the trigger flag here instead of in the loop, so that if an exception is thrown while
+    #  trying to send a notification, the trigger will stay armed for the next pass so we can try again.
+    notification_trigger_armed = False
     
     # Maintain WiFi connection while polling sensors and waiting for a notification trigger
     while True:
         # When DEBUG is enabled, use LEDs to show when each sensor is triggered
         # (The debug LED timers should match the sensor poll rate)
         if DEBUG:
-            if door_is_closed(): leds.set_oneshot_timer(leds.ledY, poll_rate)
-            if motion_is_detected(): leds.set_oneshot_timer(leds.ledR, poll_rate)
+            print(f"Door: {'[<>]' if door_is_closed() else '[  ]'}    |    Motion: {'[<>]' if motion_is_detected() else '[  ]'}")
+            # if door_is_closed(): leds.set_oneshot_timer(leds.ledY, poll_rate)
+            # if motion_is_detected(): leds.set_oneshot_timer(leds.ledR, poll_rate)
         
         # If door is closed (hall-effect sensor) and motion is detected (PIR sensor), set the notification trigger
         if door_is_closed() and motion_is_detected():
             if input_kill_switch.value() == 1:
-                print('Attempted to trigger notification, but kill switch is active.')
+                print('Attempted to arm notification trigger, but the kill switch is active.')
             else:
-                trigger_notification = True
+                notification_trigger_armed = True
         
         # Try sending notification if trigger is active
         try:
-            if trigger_notification:
+            if notification_trigger_armed:
                 # Check cooldown timer to see if we've sent a notification too recently
                 if time() < last_trigger + TRIGGER_COOLDOWN:
                     print(f'Attempted to trigger notification, but cooldown is active ({TRIGGER_COOLDOWN}s).')
-                    trigger_notification = False
+                    notification_trigger_armed = False
                 else:
-                    # If we make it here, send the notification
-                    send_gotify_notification()
-                    last_trigger = time()
-                    trigger_notification = False
+                    # If we make it here, attempt to send the notification (this will block for 10 seconds)
+                    if send_gotify_notification():
+                        last_trigger = time()
+                    notification_trigger_armed = False
+        
         except:
             print('WiFi connection dropped. Attempting to reconnect...')
             
@@ -168,6 +182,10 @@ if __name__ == '__main__':
                     print('WiFi connection re-established!')
                 else:
                     pass
-    
+        
         # Sleep between sensor checks
         sleep_ms(poll_rate)
+
+
+if __name__ == '__main__':
+    run()
